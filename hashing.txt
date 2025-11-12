@@ -1,0 +1,207 @@
+#include <stdio.h>
+#include <string.h> 
+ 
+#define TABLE_SIZE 100 
+ 
+typedef struct { 
+    char name[100]; 
+    long number; 
+    int isOccupied; 
+} Contact; 
+ 
+Contact linearTable[TABLE_SIZE]; 
+Contact quadraticTable[TABLE_SIZE]; 
+Contact doubleHashTable[TABLE_SIZE]; 
+ 
+int hash(long number) { 
+    return number % TABLE_SIZE; 
+} 
+ 
+int secondHash(long number) { 
+    return 7 - (number % 7); 
+} 
+ 
+void insertLinear(Contact table[], Contact contact) { 
+    int index = hash(contact.number); 
+    int originalIndex = index; 
+ 
+    while (table[index].isOccupied == 1) { 
+        index = (index + 1) % TABLE_SIZE; 
+        if (index == originalIndex) { 
+            printf("Hash table is full (Linear Probing)\n"); 
+            return; 
+        } 
+    } 
+    table[index] = contact; 
+    table[index].isOccupied = 1; 
+} 
+ 
+void insertQuadratic(Contact table[], Contact contact) { 
+    int index = hash(contact.number); 
+    int i = 1; 
+ 
+    while (table[index].isOccupied == 1) { 
+        index = (hash(contact.number) + i * i) % TABLE_SIZE; 
+        i++; 
+        if (i >= TABLE_SIZE) { 
+            printf("Hash table is full (Quadratic Probing)\n"); 
+            return; 
+        } 
+    } 
+    table[index] = contact; 
+    table[index].isOccupied = 1; 
+} 
+ 
+void insertDoubleHash(Contact table[], Contact contact) { 
+    int h1 = hash(contact.number); 
+    int h2 = secondHash(contact.number); 
+    int index = h1; 
+    int i = 0; 
+ 
+    while (table[index].isOccupied == 1) { 
+        i++; 
+        index = (h1 + i * h2) % TABLE_SIZE; 
+        if (i >= TABLE_SIZE) { 
+            printf("Hash table is full (Double Hashing)\n"); 
+            return; 
+        } 
+    } 
+    table[index] = contact; 
+    table[index].isOccupied = 1; 
+} 
+ 
+Contact searchLinear(Contact table[], long number) { 
+    int index = hash(number); 
+    int originalIndex = index; 
+ 
+    while (table[index].isOccupied != 0) { 
+        if (table[index].isOccupied == 1 && table[index].number == number) 
+            return table[index]; 
+        index = (index + 1) % TABLE_SIZE; 
+        if (index == originalIndex) break; 
+    } 
+ 
+    Contact notFound = {"", 0, 0}; 
+    return notFound; 
+} 
+ 
+Contact searchQuadratic(Contact table[], long number) { 
+    int index; 
+    int i = 0; 
+ 
+    while (i < TABLE_SIZE) { 
+        index = (hash(number) + i * i) % TABLE_SIZE; 
+        if (table[index].isOccupied == 0) break; 
+        if (table[index].isOccupied == 1 && table[index].number == number) 
+            return table[index]; 
+        i++; 
+    } 
+ 
+    Contact notFound = {"", 0, 0}; 
+    return notFound; 
+} 
+ 
+Contact searchDoubleHash(Contact table[], long number) { 
+    int h1 = hash(number); 
+    int h2 = secondHash(number); 
+    int index = h1; 
+    int i = 0; 
+ 
+    while (i < TABLE_SIZE) { 
+        if (table[index].isOccupied == 0) break; 
+        if (table[index].isOccupied == 1 && table[index].number == number) 
+            return table[index]; 
+        i++; 
+        index = (h1 + i * h2) % TABLE_SIZE; 
+    } 
+ 
+    Contact notFound = {"", 0, 0}; 
+    return notFound; 
+} 
+ 
+void display(Contact table[]) { 
+    for (int i = 0; i < TABLE_SIZE; i++) { 
+        if (table[i].isOccupied == 1) { 
+            printf("Index %d: %s - %ld\n", i, table[i].name, table[i].number); 
+        } 
+    } 
+} 
+ 
+int main() { 
+    int choice, method; 
+    long number; 
+    Contact contact; 
+ 
+    for (int i = 0; i < TABLE_SIZE; i++) { 
+        linearTable[i].isOccupied = 0; 
+        quadraticTable[i].isOccupied = 0; 
+        doubleHashTable[i].isOccupied = 0; 
+    } 
+ 
+    while (1) { 
+        printf("\n--- Telephone Directory ---\n"); 
+        printf("1. Insert\n2. Search\n3. Display\n4. Exit\n"); 
+        printf("Enter your choice: "); 
+        scanf("%d", &choice); 
+ 
+        if (choice == 4) break; 
+ 
+        printf("Choose method:\n1. Linear Probing\n2. Quadratic Probing\n3. Double Hashing\n"); 
+        scanf("%d", &method); 
+ 
+        switch (choice) { 
+            case 1: 
+                printf("Enter name: "); 
+                scanf("%s", contact.name); 
+                printf("Enter number: "); 
+                scanf("%ld", &contact.number); 
+                contact.isOccupied = 1; 
+                if (method == 1) 
+                    insertLinear(linearTable, contact); 
+                else if (method == 2) 
+                    insertQuadratic(quadraticTable, contact); 
+                else if (method == 3) 
+                    insertDoubleHash(doubleHashTable, contact); 
+                else 
+                    printf("Invalid method.\n"); 
+                break; 
+ 
+            case 2: 
+                printf("Enter number to search: "); 
+                scanf("%ld", &number); 
+                if (method == 1) 
+                    contact = searchLinear(linearTable, number); 
+                else if (method == 2) 
+                    contact = searchQuadratic(quadraticTable, number); 
+                else if (method == 3) 
+                    contact = searchDoubleHash(doubleHashTable, number); 
+                else { 
+                    printf("Invalid method.\n"); 
+                    continue; 
+                } 
+ 
+                if (contact.isOccupied == 1) 
+                    printf("Found: %s - %ld\n", contact.name, contact.number); 
+                else 
+                    printf("Contact not found.\n"); 
+                break; 
+ 
+            case 3: 
+                if (method == 1) 
+                    display(linearTable); 
+                else if (method == 2) 
+                    display(quadraticTable); 
+                else if (method == 3) 
+                    display(doubleHashTable); 
+                else 
+                    printf("Invalid method.\n"); 
+                break; 
+ 
+            default: 
+                printf("Invalid choice.\n"); 
+        } 
+    } 
+ 
+    return 0; 
+}
+ 
